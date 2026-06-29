@@ -1,0 +1,24 @@
+# Proprietary NXP eIQ Neutron SDK — non-redistributable (LA_OPT_NXP license).
+# Provided at runtime via $NEUTRON_SDK_DIR; never commit it.
+/vendor/
+eiq-neutron-sdk-*.zip
+
+# Local compose config & model I/O dir
+.env
+/models/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Models / artifacts
+*.tflite
+*.onnx
+*.pt
+*.pth
+*.h5
+*.keras
