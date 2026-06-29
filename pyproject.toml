@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "imx95-npu-converter"
+version = "0.1.0"
+description = "Convert PyTorch/TensorFlow/ONNX/TFLite models to a *_neutron.tflite for the i.MX 95 eIQ Neutron NPU"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "BSD-3-Clause" }
+dependencies = [
+    "numpy>=1.23",
+    "pillow>=9.0",
+]
+
+# Heavy framework deps are optional extras so a last-mile-only install
+# (just wrapping the neutron converter) stays lean. `full` pulls everything.
+[project.optional-dependencies]
+tensorflow = ["tensorflow-cpu>=2.15,<2.17", "tf-keras>=2.15"]
+onnx = ["onnx>=1.14", "onnx2tf>=1.20", "onnxruntime>=1.16", "onnx-graphsurgeon>=0.3.27", "sng4onnx>=1.0.1", "tf-keras>=2.15"]
+torch = ["torch>=2.1"]
+full = [
+    "tensorflow-cpu>=2.15,<2.17", "tf-keras>=2.15",
+    "onnx>=1.14", "onnx2tf>=1.20", "onnxruntime>=1.16",
+    "onnx-graphsurgeon>=0.3.27", "sng4onnx>=1.0.1",
+    "torch>=2.1",
+]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+imx95-convert = "imx95_npu.cli:main"
+
+[tool.setuptools]
+packages = ["imx95_npu", "imx95_npu.converters"]
+py-modules = ["convert_neutron_model"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

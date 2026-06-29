@@ -1,0 +1,33 @@
+# Runtime dependencies for the imx95-convert multi-format pipeline.
+# Pinned in the Docker image; loose here so a host venv can resolve compatible
+# wheels. The NXP neutron-converter is NOT here -- it ships with the eIQ Toolkit
+# and is provided at runtime (see README).
+
+# numpy must stay <2.0: TensorFlow 2.16 predates numpy 2 and its native TFLite
+# converter aborts under numpy>=2 ("Fatal Python error: Aborted").
+numpy>=1.23,<2.0
+pillow>=9.0
+# protobuf must stay <5 for TF 2.16 / onnx compatibility.
+protobuf>=3.20,<5
+
+# TensorFlow path (TF/Keras -> int8 TFLite) and the TFLite quantization inspector.
+# We force the Keras 2 API (TF_USE_LEGACY_KERAS, set in imx95_npu/__init__.py)
+# because TF>=2.16's default Keras 3 crashes the TFLite MLIR converter.
+tensorflow-cpu>=2.16,<2.17
+tf-keras>=2.16
+
+# ONNX path (and Torch -> ONNX -> TFLite via onnx2tf).
+onnx>=1.14
+onnx2tf>=1.20
+onnxruntime>=1.16
+onnx-graphsurgeon>=0.3.27
+sng4onnx>=1.0.1
+# onnx2tf transitive deps that aren't always pulled automatically.
+ai-edge-litert>=1.0
+psutil>=5.9
+# ai-edge-litert needs ml_dtypes with float4_e2m1fn (>=0.5); TF 2.16 pins ~=0.3.1
+# but tolerates the newer one at runtime. The Docker build force-upgrades it after
+# requirements; if installing on a host, run: pip install --upgrade "ml_dtypes>=0.5.1"
+
+# Torch path (CPU export to ONNX). Install the CPU wheel in Docker to keep size down.
+torch>=2.1

@@ -1,0 +1,43 @@
+# docker-compose for the imx95-convert CLI.
+#
+# Runs as a LONG-LIVED container you exec into, so repeated conversions reuse the
+# same warm container (no per-run image start / dependency import overhead):
+#
+#   docker compose up -d --build                       # start it once
+#   docker compose exec convert imx95-convert model.onnx --rep-data calib.npy --input-shape 3,224,224
+#   docker compose exec convert imx95-convert model.tflite        # already-quantized
+#   docker compose exec convert imx95-convert --help
+#   docker compose down                                # stop it when done
+#
+# Paths you pass are relative to /data (your models directory). Outputs
+# (*_neutron.tflite) are written back there. New/changed files in MODELS_DIR
+# show up live in the container (it's a bind mount) — no restart needed.
+#
+# For a single throwaway run without a persistent container you can still do:
+#   docker compose run --rm --entrypoint imx95-convert convert --help
+#
+# Configure host paths via a .env file (see .env.example):
+#   MODELS_DIR        host dir with input models / where outputs land  (default ./models)
+#   NEUTRON_SDK_DIR   host dir of the extracted eIQ Neutron SDK        (default ./vendor/eiq-neutron-sdk)
+
+services:
+  convert:
+    build: .
+    image: imx95-convert:latest
+    container_name: imx95-convert
+    init: true  # proper signal handling / PID 1 reaping for the idle process
+    volumes:
+      # Models in/out.
+      - ${MODELS_DIR:-./models}:/data
+      # Proprietary eIQ Neutron SDK, mounted read-only (never baked into the image).
+      # If this path doesn't exist the nxp backend is unavailable and the tool
+      # falls back to the tflite backend.
+      - ${NEUTRON_SDK_DIR:-./vendor/eiq-neutron-sdk}:/opt/sdk:ro
+    environment:
+      # Enables the nxp quantization backend (auto-detected by the CLI).
+      NEUTRON_SDK_DIR: /opt/sdk
+    working_dir: /data
+    # Override the image's CLI entrypoint so the container idles instead of
+    # running once and exiting. Do real work via `docker compose exec`.
+    entrypoint: ["sleep", "infinity"]
+    restart: unless-stopped
